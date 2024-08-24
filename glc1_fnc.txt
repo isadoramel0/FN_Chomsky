@@ -1,3 +1,2 @@
 S -> AA
 A -> aA | a
-D -> dD | d

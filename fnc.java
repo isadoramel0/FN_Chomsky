@@ -272,7 +272,7 @@ public class fnc {
     }    
 
     // 4° Passo: remover variáveis inúteis
-    public static Map<String, StringBuilder> removerVariaveisInuteis(Map<String, StringBuilder> producoes) {
+    public static Map<String, StringBuilder> term(Map<String, StringBuilder> producoes) {
         // Converter as produções para o formato List<String>
         Map<String, List<String>> regras = converterProducoes(producoes);
     
@@ -331,6 +331,42 @@ public class fnc {
         // Converter as novas regras de volta para o formato Map<String, StringBuilder>
         Map<String, StringBuilder> producoesAtualizadas = converterParaStringBuilder(novasRegras);
         return producoesAtualizadas;
+    }
+    public static void reach(Map<String, StringBuilder> producoes, String simboloInicial) {
+        Set<String> acessiveis = new HashSet<>();
+        acessiveis.add(simboloInicial); // Adiciona o símbolo inicial
+
+        boolean mudou = true;
+
+        while (mudou) {
+            mudou = false;
+
+            // Iterar por todas as produções
+            for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
+                String simbolo = entry.getKey();
+                String regra = entry.getValue().toString().trim();
+
+                if (acessiveis.contains(simbolo)) {
+                    String[] producoesRegra = regra.split("\\|");
+
+                    // Verificar cada parte da produção
+                    for (String producao : producoesRegra) {
+                        for (char c : producao.toCharArray()) {
+                            String simboloNovo = String.valueOf(c);
+
+                            // Se for um não-terminal e ainda não estiver no conjunto
+                            if (Character.isUpperCase(c) && !acessiveis.contains(simboloNovo)) {
+                                acessiveis.add(simboloNovo);
+                                mudou = true; // Houve mudança, precisa repetir
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Remover as produções que não são acessíveis
+        producoes.keySet().removeIf(simbolo -> !acessiveis.contains(simbolo));
     }
 
     // Método para ler a gramática de glc1.txt
@@ -464,10 +500,10 @@ public class fnc {
             mostrarGramatica(producoes);
 
             // Remover variáveis inúteis
-            System.out.println("Remover variaveis inuteis: ");
-            producoes = removerVariaveisInuteis(producoes);
+            System.out.println("Remover símbolos inuteis: ");
+            producoes = term(producoes);
+            reach(producoes, simbInicial);
             mostrarGramatica(producoes);
-
             // Escrever a gramática transformada no arquivo de saída
             escritaArq(producoes, outputFile, simbInicial);
         } catch (IOException e) {
