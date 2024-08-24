@@ -271,6 +271,68 @@ public class fnc {
         return chainSet;
     }    
 
+    // 4° Passo: remover variáveis inúteis
+    public static Map<String, StringBuilder> removerVariaveisInuteis(Map<String, StringBuilder> producoes) {
+        // Converter as produções para o formato List<String>
+        Map<String, List<String>> regras = converterProducoes(producoes);
+    
+        // Etapa 1: Identificar as variáveis que podem gerar cadeias terminais
+        Set<String> geradoras = new HashSet<>();
+        boolean mudou;
+    
+        do {
+            mudou = false;
+            for (Map.Entry<String, List<String>> entry : regras.entrySet()) {
+                String variavel = entry.getKey();
+                List<String> producoesVariavel = entry.getValue();
+    
+                if (!geradoras.contains(variavel)) {
+                    for (String producao : producoesVariavel) {
+                        boolean geraTerminais = true;
+                        for (char c : producao.toCharArray()) {
+                            String s = String.valueOf(c);
+                            if (Character.isUpperCase(c) && !geradoras.contains(s)) {
+                                geraTerminais = false;
+                                break;
+                            }
+                        }
+                        if (geraTerminais) {
+                            geradoras.add(variavel);
+                            mudou = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        } while (mudou);
+    
+        // Etapa 2: Remover produções e variáveis que não são geradoras
+        Map<String, List<String>> novasRegras = new HashMap<>();
+        for (String variavel : geradoras) {
+            List<String> novasProducoes = new ArrayList<>();
+            for (String producao : regras.get(variavel)) {
+                boolean somenteGeradoras = true;
+                for (char c : producao.toCharArray()) {
+                    String s = String.valueOf(c);
+                    if (Character.isUpperCase(c) && !geradoras.contains(s)) {
+                        somenteGeradoras = false;
+                        break;
+                    }
+                }
+                if (somenteGeradoras) {
+                    novasProducoes.add(producao);
+                }
+            }
+            if (!novasProducoes.isEmpty()) {
+                novasRegras.put(variavel, novasProducoes);
+            }
+        }
+    
+        // Converter as novas regras de volta para o formato Map<String, StringBuilder>
+        Map<String, StringBuilder> producoesAtualizadas = converterParaStringBuilder(novasRegras);
+        return producoesAtualizadas;
+    }
+
     // Método para ler a gramática de glc1.txt
     private static Map<String, StringBuilder> leituraArq(String inputFile) throws IOException {
         // Usamos LinkedHashMap para garantir a ordem de inserção
@@ -306,24 +368,37 @@ public class fnc {
 
     // Método para escrever em glc1_fnc.txt
     private static void escritaArq(Map<String, StringBuilder> producoes, String outputFile, String simbInicial)
-            throws IOException {
-        try (BufferedWriter escrita = new BufferedWriter(new FileWriter(outputFile))) {
+        throws IOException {
+    try (BufferedWriter escrita = new BufferedWriter(new FileWriter(outputFile))) {
+        List<String> naoTerminais = new ArrayList<>();
 
-            String novoSimbolo = simbInicial + "'";
-            if (producoes.containsKey(novoSimbolo)) {
-                escrita.write(novoSimbolo + " -> " + producoes.get(novoSimbolo).toString());
-                escrita.newLine();
-            }
+        // Adicionar 'S'' primeiro, se existir
+        if (producoes.containsKey("S'")) {
+            naoTerminais.add("S'");
+        }
 
-            // Escrever os demais símbolos, exceto o símbolo inicial e seu novo símbolo
-            for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
-                if (!entry.getKey().equals(novoSimbolo)) {
-                    escrita.write(entry.getKey() + " -> " + entry.getValue().toString());
-                    escrita.newLine();
-                }
+        // Adicionar 'S' em seguida, se existir
+        if (producoes.containsKey("S")) {
+            naoTerminais.add("S");
+        }
+
+        // Adicionar os demais não terminais
+        for (String naoTerminal : producoes.keySet()) {
+            if (!naoTerminal.equals("S'") && !naoTerminal.equals("S")) {
+                naoTerminais.add(naoTerminal);
             }
         }
+
+        // Ordenar os demais não terminais em ordem alfabética, exceto os S
+        naoTerminais.subList(2, naoTerminais.size()).sort(String::compareTo);
+
+        // Escrever as produções na ordem correta
+        for (String naoTerminal : naoTerminais) {
+            escrita.write(naoTerminal + " -> " + producoes.get(naoTerminal).toString());
+            escrita.newLine();
+        }
     }
+}
 
     // Mostrar gramática em ordem alfabética dps do S' e S
     private static void mostrarGramatica(Map<String, StringBuilder> producoes) {
@@ -386,6 +461,11 @@ public class fnc {
             // Remover regras de cadeia
             System.out.println("Remover regras de cadeia: ");
             producoes = removeRegraDeCadeia(producoes);
+            mostrarGramatica(producoes);
+
+            // Remover variáveis inúteis
+            System.out.println("Remover variaveis inuteis: ");
+            producoes = removerVariaveisInuteis(producoes);
             mostrarGramatica(producoes);
 
             // Escrever a gramática transformada no arquivo de saída
