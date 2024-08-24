@@ -5,60 +5,73 @@ import java.util.Map;
 
 public class fnc {
     public static void recSimbInicial(Map<String, StringBuilder> producoes, String simbInicial) {
-        // Dividir as produções do símbolo inicial em produções individuais
-        StringBuilder regrasOriginais = producoes.get(simbInicial);
-        String[] producoesArray = regrasOriginais.toString().split("\\|");
 
-        boolean temRecursao = false;
-            for (String regra : producoesArray) {
-                regra = regra.trim();
-                if (regra.contains(simbInicial)) {
-                    temRecursao = true;
-                    break;
-                }
-            }
-            if (!temRecursao) {
-                return;
-            }
+        boolean precisaNovoSimbolo = false;
 
-        // Criar um novo símbolo não-terminal para lidar com a recursão
+        // Verificar se há recursão direta no símbolo inicial
+        for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
+            String chave = entry.getKey();
+            StringBuilder regras = entry.getValue();
+            
+            // Verificar se a produção contém o símbolo inicial
+            if (regras.toString().contains(simbInicial)) {
+                precisaNovoSimbolo = true;
+                break;
+            }
+        }
+
+        if (!precisaNovoSimbolo) {
+            // Se não há recursão, não precisa criar um novo símbolo
+            return;
+        }
+
+        // Criar um novo símbolo para lidar com a recursão
         String novoSimbolo = simbInicial + "'";
         StringBuilder novasProducoes = new StringBuilder();
         StringBuilder producoesNaoRecursivas = new StringBuilder();
 
         // Processar as produções
-        for (String regra : producoesArray) {
-            regra = regra.trim();
-            if (regra.contains(simbInicial)) {
-                // Se a regra contém o símbolo inicial em qualquer parte
-                // Mover a parte recursiva para o novo símbolo
-                String regraSemRecursao = regra.replaceAll(simbInicial, novoSimbolo).trim();
-                if (novasProducoes.length() > 0) {
-                    novasProducoes.append(" | ");
+        for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
+            String chave = entry.getKey();
+            StringBuilder regra = entry.getValue();
+            String regraStr = regra.toString().trim();
+            
+            if (chave.equals(simbInicial)) {
+                // Copiar todas as produções do símbolo inicial para o novo símbolo
+                String[] partes = regraStr.split("\\|");
+                for (String parte : partes) {
+                    String parteTrimmed = parte.trim();
+                    // Adicionar produções do símbolo inicial ao novo símbolo
+                    if (novasProducoes.length() > 0) {
+                        novasProducoes.append(" | ");
+                    }
+                    novasProducoes.append(parteTrimmed);
                 }
-                novasProducoes.append(regraSemRecursao);
-            } else {
-                // Adicionar as produções não recursivas ao novo símbolo
+            } 
+            else {
+                // Adicionar as produções não recursivas, substituindo o símbolo inicial pelo novo símbolo
+                String regraAtualizada = regraStr.replace(simbInicial, novoSimbolo);
                 if (producoesNaoRecursivas.length() > 0) {
                     producoesNaoRecursivas.append(" | ");
                 }
-                producoesNaoRecursivas.append(regra);
+                producoesNaoRecursivas.append(regraAtualizada);
             }
         }
 
         // Atualizar a regra do símbolo inicial para apontar somente para o novo símbolo
         producoes.put(simbInicial, new StringBuilder(novoSimbolo));
-
-        // Adicionar as regras não recursivas ao novo símbolo
-        if (producoesNaoRecursivas.length() > 0) {
-            if (novasProducoes.length() > 0) {
-                novasProducoes.append(" | ");
-            }
-            novasProducoes.append(producoesNaoRecursivas);
-        }
         // Adicionar o novo símbolo ao mapa de produções
-        producoes.put(novoSimbolo, novasProducoes);
-    }
+        producoes.put(novoSimbolo, novasProducoes.length() > 0 ? novasProducoes : new StringBuilder("."));
+
+    for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
+            String chave = entry.getKey();
+            StringBuilder regra = entry.getValue();
+            if (!chave.equals(simbInicial)) {
+                String regraAtualizada = regra.toString().replace(simbInicial, novoSimbolo);
+                producoes.put(chave, new StringBuilder(regraAtualizada));
+            }
+        }
+}
 
     // Método para ler a gramática de glc1.txt
     private static Map<String, StringBuilder> leituraArq(String inputFile) throws IOException {
@@ -142,4 +155,3 @@ public class fnc {
         }
     }
 }
-
