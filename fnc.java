@@ -43,6 +43,77 @@ public class fnc {
         return regras;
     }
 
+    // 1° Passo: remover recursividade do símbolo inicial
+    public static void recSimbInicial(Map<String, StringBuilder> producoes, String simbInicial) {
+
+        boolean precisaNovoSimbolo = false;
+
+        // Verificar se há recursão direta no símbolo inicial
+        for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
+            String chave = entry.getKey();
+            StringBuilder regras = entry.getValue();
+            
+            // Verificar se a produção contém o símbolo inicial
+            if (regras.toString().contains(simbInicial)) {
+                precisaNovoSimbolo = true;
+                break;
+            }
+        }
+
+        if (!precisaNovoSimbolo) {
+            // Se não há recursão, não precisa criar um novo símbolo
+            return;
+        }
+
+        // Criar um novo símbolo para lidar com a recursão
+        String novoSimbolo = simbInicial;
+        simbInicial = simbInicial + "'";
+        StringBuilder novasProducoes = new StringBuilder();
+        StringBuilder producoesNaoRecursivas = new StringBuilder();
+
+        // Processar as produções
+        for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
+            String chave = entry.getKey();
+            StringBuilder regra = entry.getValue();
+            String regraStr = regra.toString().trim();
+            
+            if (chave.equals(novoSimbolo)) {
+                // Copiar todas as produções do símbolo inicial para o novo símbolo
+                String[] partes = regraStr.split("\\|");
+                for (String parte : partes) {
+                    String parteTrimmed = parte.trim();
+                    // Adicionar produções do símbolo inicial ao novo símbolo
+                    if (novasProducoes.length() > 0) {
+                        novasProducoes.append(" | ");
+                    }
+                    novasProducoes.append(parteTrimmed);
+                }
+            } 
+            else {
+                // Adicionar as produções não recursivas, substituindo o símbolo inicial pelo novo símbolo
+                String regraAtualizada = regraStr.replace(simbInicial, novoSimbolo);
+                if (producoesNaoRecursivas.length() > 0) {
+                    producoesNaoRecursivas.append(" | ");
+                }
+                producoesNaoRecursivas.append(regraAtualizada);
+            }
+        }
+
+        // Atualizar a regra do símbolo inicial para apontar somente para o novo símbolo
+        producoes.put(simbInicial, new StringBuilder(novoSimbolo));
+        // Adicionar o novo símbolo ao mapa de produções
+        producoes.put(novoSimbolo, novasProducoes.length() > 0 ? novasProducoes : new StringBuilder("."));
+
+    for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
+            String chave = entry.getKey();
+            StringBuilder regra = entry.getValue();
+            if (!chave.equals(simbInicial)) {
+                String regraAtualizada = regra.toString().replace(simbInicial, novoSimbolo);
+                producoes.put(chave, new StringBuilder(regraAtualizada));
+            }
+        }
+}
+
     private static List<String> gerarCombinacoes(String producao, String nula) {
         List<String> combinacoes = new ArrayList<>();
         int index = producao.indexOf(nula);
@@ -56,6 +127,7 @@ public class fnc {
         return combinacoes;
     }
 
+    // 2° Passo: remover regras λ
     public static Map<String, StringBuilder> removerRegrasNulas(Map<String, StringBuilder> producoes) {
         Map<String, List<String>> regras = converterProducoes(producoes);
         Set<String> nulas = new HashSet<>();
@@ -139,75 +211,65 @@ public class fnc {
         return producoesAtualizada;
     }
 
-    public static void recSimbInicial(Map<String, StringBuilder> producoes, String simbInicial) {
-
-        boolean precisaNovoSimbolo = false;
-
-        // Verificar se há recursão direta no símbolo inicial
-        for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
-            String chave = entry.getKey();
-            StringBuilder regras = entry.getValue();
-            
-            // Verificar se a produção contém o símbolo inicial
-            if (regras.toString().contains(simbInicial)) {
-                precisaNovoSimbolo = true;
-                break;
-            }
+    // 3° Passo: remover regras de cadeia
+    public static Map<String, StringBuilder> removeRegraDeCadeia(Map<String, StringBuilder> producoes) {
+        // Converter as produções para o formato List<String> para facilitar o processamento
+        Map<String, List<String>> regras = converterProducoes(producoes);
+    
+        // Calcular chain(V) para cada variável V
+        Map<String, Set<String>> chainSets = new HashMap<>();
+        for (String variavel : regras.keySet()) {
+            chainSets.put(variavel, calcularChain(variavel, regras));
         }
-
-        if (!precisaNovoSimbolo) {
-            // Se não há recursão, não precisa criar um novo símbolo
-            return;
-        }
-
-        // Criar um novo símbolo para lidar com a recursão
-        String novoSimbolo = simbInicial;
-        simbInicial = simbInicial + "'";
-        StringBuilder novasProducoes = new StringBuilder();
-        StringBuilder producoesNaoRecursivas = new StringBuilder();
-
-        // Processar as produções
-        for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
-            String chave = entry.getKey();
-            StringBuilder regra = entry.getValue();
-            String regraStr = regra.toString().trim();
-            
-            if (chave.equals(novoSimbolo)) {
-                // Copiar todas as produções do símbolo inicial para o novo símbolo
-                String[] partes = regraStr.split("\\|");
-                for (String parte : partes) {
-                    String parteTrimmed = parte.trim();
-                    // Adicionar produções do símbolo inicial ao novo símbolo
-                    if (novasProducoes.length() > 0) {
-                        novasProducoes.append(" | ");
+    
+        // Substituir regras de cadeia pelas produções diretas
+        Map<String, List<String>> novasRegras = new HashMap<>();
+        for (String variavel : regras.keySet()) {
+            Set<String> chainSet = chainSets.get(variavel);
+            List<String> novasProducoes = new ArrayList<>();
+    
+            for (String w : chainSet) {
+                List<String> producoesW = regras.get(w);
+                for (String producao : producoesW) {
+                    // Ignorar regras de cadeia (do tipo W -> X)
+                    if (!regras.containsKey(producao.trim())) {
+                        if (!novasProducoes.contains(producao)) {
+                            novasProducoes.add(producao.trim());
+                        }
                     }
-                    novasProducoes.append(parteTrimmed);
                 }
-            } 
-            else {
-                // Adicionar as produções não recursivas, substituindo o símbolo inicial pelo novo símbolo
-                String regraAtualizada = regraStr.replace(simbInicial, novoSimbolo);
-                if (producoesNaoRecursivas.length() > 0) {
-                    producoesNaoRecursivas.append(" | ");
+            }
+    
+            novasRegras.put(variavel, novasProducoes);
+        }
+    
+        // Converter as novas regras de volta para o formato Map<String, StringBuilder>
+        Map<String, StringBuilder> producoesAtualizadas = converterParaStringBuilder(novasRegras);
+    
+        return producoesAtualizadas;
+    }
+    
+    // Função auxiliar para calcular o conjunto chain(V)
+    private static Set<String> calcularChain(String variavel, Map<String, List<String>> regras) {
+        Set<String> chainSet = new HashSet<>();
+        Queue<String> fila = new LinkedList<>();
+        fila.add(variavel);
+    
+        while (!fila.isEmpty()) {
+            String atual = fila.poll();
+            if (!chainSet.contains(atual)) {
+                chainSet.add(atual);
+                for (String producao : regras.get(atual)) {
+                    producao = producao.trim();
+                    if (regras.containsKey(producao)) { // Se a produção é uma variável
+                        fila.add(producao);
+                    }
                 }
-                producoesNaoRecursivas.append(regraAtualizada);
             }
         }
-
-        // Atualizar a regra do símbolo inicial para apontar somente para o novo símbolo
-        producoes.put(simbInicial, new StringBuilder(novoSimbolo));
-        // Adicionar o novo símbolo ao mapa de produções
-        producoes.put(novoSimbolo, novasProducoes.length() > 0 ? novasProducoes : new StringBuilder("."));
-
-    for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
-            String chave = entry.getKey();
-            StringBuilder regra = entry.getValue();
-            if (!chave.equals(simbInicial)) {
-                String regraAtualizada = regra.toString().replace(simbInicial, novoSimbolo);
-                producoes.put(chave, new StringBuilder(regraAtualizada));
-            }
-        }
-}
+    
+        return chainSet;
+    }    
 
     // Método para ler a gramática de glc1.txt
     private static Map<String, StringBuilder> leituraArq(String inputFile) throws IOException {
@@ -319,6 +381,11 @@ public class fnc {
             // Remover regras nulas
             System.out.println("Remover regras nulas: ");
             producoes = removerRegrasNulas(producoes);
+            mostrarGramatica(producoes);
+
+            // Remover regras de cadeia
+            System.out.println("Remover regras de cadeia: ");
+            producoes = removeRegraDeCadeia(producoes);
             mostrarGramatica(producoes);
 
             // Escrever a gramática transformada no arquivo de saída

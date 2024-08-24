@@ -1,4 +1,4 @@
-S' -> S | .
-S -> abbbS | b | C | D | abbb
+S' -> abbbS | b | abbb | Sc | c | . | abc | a
+S -> abbbS | b | abbb | Sc | c | abc | a
 C -> Sc | c
 D -> abc | a
