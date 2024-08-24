@@ -1,4 +1,4 @@
-S -> abbb |b | C | D
+S -> abbbS |b | C | D
 C -> Sc | .
 D -> abc | a
 D -> .

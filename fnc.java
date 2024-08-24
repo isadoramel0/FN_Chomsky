@@ -161,7 +161,8 @@ public class fnc {
         }
 
         // Criar um novo símbolo para lidar com a recursão
-        String novoSimbolo = simbInicial + "'";
+        String novoSimbolo = simbInicial;
+        simbInicial = simbInicial + "'";
         StringBuilder novasProducoes = new StringBuilder();
         StringBuilder producoesNaoRecursivas = new StringBuilder();
 
@@ -171,7 +172,7 @@ public class fnc {
             StringBuilder regra = entry.getValue();
             String regraStr = regra.toString().trim();
             
-            if (chave.equals(simbInicial)) {
+            if (chave.equals(novoSimbolo)) {
                 // Copiar todas as produções do símbolo inicial para o novo símbolo
                 String[] partes = regraStr.split("\\|");
                 for (String parte : partes) {
@@ -245,9 +246,6 @@ public class fnc {
     private static void escritaArq(Map<String, StringBuilder> producoes, String outputFile, String simbInicial)
             throws IOException {
         try (BufferedWriter escrita = new BufferedWriter(new FileWriter(outputFile))) {
-            // Primeiro escrever o símbolo inicial e o seu novo símbolo imediatamente após
-            escrita.write(simbInicial + " -> " + producoes.get(simbInicial).toString());
-            escrita.newLine();
 
             String novoSimbolo = simbInicial + "'";
             if (producoes.containsKey(novoSimbolo)) {
@@ -257,7 +255,7 @@ public class fnc {
 
             // Escrever os demais símbolos, exceto o símbolo inicial e seu novo símbolo
             for (Map.Entry<String, StringBuilder> entry : producoes.entrySet()) {
-                if (!entry.getKey().equals(simbInicial) && !entry.getKey().equals(novoSimbolo)) {
+                if (!entry.getKey().equals(novoSimbolo)) {
                     escrita.write(entry.getKey() + " -> " + entry.getValue().toString());
                     escrita.newLine();
                 }
