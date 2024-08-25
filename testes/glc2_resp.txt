@@ -1,0 +1,8 @@
+S' → BS | BA | SA | a | λ | A'A | B'A' | BT₁ | BT₂
+S → BS | BA | SA | a | A'A | B'A' | BT₁ | BT₂
+A → a | A'A
+B → B'A' | BT₂
+A' → a
+B' → b
+T₁ → SA
+T₂ → B'A'

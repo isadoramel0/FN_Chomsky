@@ -1,0 +1,9 @@
+S → AC | AA | CA | c | b | λ | A'A' | C'C | B'B | AT₁ | A'T₂
+A → b | c | A'A' | B'B | C'C | A'T₂
+B → b | B'B
+C → c | C'C
+A' → a
+C' → c
+B' → b
+T₁ → CA
+T₂ → AA'

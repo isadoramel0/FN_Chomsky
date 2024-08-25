@@ -1,0 +1,6 @@
+S' → a | b | c | λ | A'S | B'S | A'T₁
+S → a | b | c | A'S | B'S | A'T₁
+A' → a
+B' → b
+C' → c
+T₁ → B'C'

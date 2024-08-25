@@ -1,0 +1,5 @@
+S → A'A
+A → A'A | A'D
+D → b | B'D
+A' → a
+B' → b

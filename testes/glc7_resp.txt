@@ -1,0 +1,5 @@
+S → b | a | λ | AB' | B'A | AA' | AT₁
+A → a | AA'
+B' → b
+A' → a
+T₁ → B'A

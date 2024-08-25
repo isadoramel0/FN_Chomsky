@@ -1,0 +1,3 @@
+S -> BSA | A
+A -> aA | .
+B -> Bba | .

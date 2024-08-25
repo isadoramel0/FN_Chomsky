@@ -1,0 +1,13 @@
+S → a | AT₁ | A'T₂
+A → a | A'A
+B → B'C | B'T₄
+C → A'T₆
+A' → a
+B' → b
+C' → c
+T₁ → BC
+T₂ → AT₃
+T₃ → B'B
+T₄ → BT₅
+T₅ → C'C
+T₆ → B'C'
